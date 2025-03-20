@@ -1,10 +1,10 @@
 import json
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Sequence, Union
 
 from openai.types.chat import ChatCompletionMessageToolCall, ChatCompletionToolParam
 from pydantic import BaseModel
 
-from toolsmith import func_to_schema
+from toolsmith.toolsmith import func_to_pydantic, func_to_schema
 
 
 class Invocation(BaseModel):
@@ -19,11 +19,30 @@ class Invocation(BaseModel):
 class Toolbox(BaseModel):
     functions: dict[str, Callable[..., str]]
 
+    _schema_cache: Union[list[ChatCompletionToolParam], None] = None
+    _func_arg_models_cache: Union[dict[str, type[BaseModel]], None] = None
+
+    class Config:
+        frozen = True
+
     def __init__(self, functions: Sequence[Callable[..., str]]):
         super().__init__(functions={f.__name__: f for f in functions})
 
     def get_schema(self) -> Sequence[ChatCompletionToolParam]:
-        return [func_to_schema(f) for f in self.functions.values()]
+        if self._schema_cache is None:
+            self._schema_cache = [func_to_schema(f) for f in self.functions.values()]
+        return self._schema_cache
+
+    def get_func_arg_models(self) -> dict[str, type[BaseModel]]:
+        if self._func_arg_models_cache is None:
+            self._func_arg_models_cache = {
+                name: func_to_pydantic(f) for name, f in self.functions.items()
+            }
+        return self._func_arg_models_cache
+
+    def _parse_args(self, func_name: str, args_json: str) -> dict[str, Any]:
+        func_args_model = self.get_func_arg_models()[func_name]
+        return dict(func_args_model(**json.loads(args_json)))
 
     def parse_invocations(
         self, tool_calls: list[ChatCompletionMessageToolCall]
@@ -31,15 +50,17 @@ class Toolbox(BaseModel):
         # Convert the args to actual types
         result: list[Invocation] = []
         for tool_call in tool_calls:
-            args = json.loads(tool_call.function.arguments)
-            if tool_call.function.name in self.functions:
-                result.append(
-                    Invocation(
-                        id=tool_call.id,
-                        func=self.functions[tool_call.function.name],
-                        args=json.loads(tool_call.function.arguments),
-                    )
+            func_name = tool_call.function.name
+            if func_name not in self.functions:
+                raise ValueError(f"Function {func_name} not found in toolbox")
+
+            result.append(
+                Invocation(
+                    id=tool_call.id,
+                    func=self.functions[func_name],
+                    args=self._parse_args(func_name, tool_call.function.arguments),
                 )
+            )
 
         return result
 
