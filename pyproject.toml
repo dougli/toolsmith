@@ -5,10 +5,12 @@ description = "Write functions for function calling."
 authors = ["Douglas Li <lidouglas@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+packages = [{include = "toolsmith"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 pydantic = "^2.10.6"
+openai = "^1.67.0"
 
 
 [tool.poetry.group.dev.dependencies]

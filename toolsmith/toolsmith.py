@@ -1,8 +1,8 @@
 import inspect
-from typing import Callable, get_type_hints
+from typing import Any, Callable, get_type_hints
 
 
-def wrap_tool(tool: Callable[..., str]):
+def func_to_schema(tool: Callable[..., str], strict: bool = False) -> dict[str, Any]:
     """Wraps a Python function to be compatible with OpenAI's function calling API.
 
     Args:
@@ -30,6 +30,9 @@ def wrap_tool(tool: Callable[..., str]):
 
     # Build function schema
     schema = {"name": tool.__name__, "description": doc, "parameters": parameters}
+    if strict:
+        schema["strict"] = True
+        schema["parameters"]["additionalProperties"] = False
 
     return schema
 
