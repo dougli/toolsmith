@@ -1,20 +1,20 @@
 [tool.poetry]
 name = "toolsmith"
 version = "0.1.0"
-description = "Write functions for function calling."
+description = "Instantly turn your Python functions into structured, AI-callable tools."
 authors = ["Douglas Li <lidouglas@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [{include = "toolsmith"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.9"
 pydantic = "^2.10.6"
 openai = "^1.67.0"
 
-
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
+pytest-asyncio = "^0.25.3"
 
 [build-system]
 requires = ["poetry-core"]
