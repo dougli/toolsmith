@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "toolsmith"
+version = "0.1.0"
+description = "Write functions for function calling."
+authors = ["Douglas Li <lidouglas@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pydantic = "^2.10.6"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
