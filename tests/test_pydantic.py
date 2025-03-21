@@ -35,6 +35,11 @@ def add_to_zoo(animal: Animal) -> str:
     return f"Added {animal.name}, a {animal.type.value} to the zoo"
 
 
+def add_many_to_zoo(animals: list[Animal]) -> str:
+    """Add many animals to the zoo"""
+    return f"Added {', '.join([a.name for a in animals])} to the zoo"
+
+
 def test_pydantic_schema_generation():
     # Wrap the weather function
     schema = func_to_schema(create_user)

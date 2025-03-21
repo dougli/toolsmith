@@ -1,7 +1,11 @@
 import json
 from typing import Any, Callable, Sequence, Union
 
-from openai.types.chat import ChatCompletionMessageToolCall, ChatCompletionToolParam
+from openai.types.chat import (
+    ChatCompletionMessageToolCall,
+    ChatCompletionToolMessageParam,
+    ChatCompletionToolParam,
+)
 from pydantic import BaseModel
 
 from toolsmith.toolsmith import func_to_pydantic, func_to_schema
@@ -22,8 +26,7 @@ class Toolbox(BaseModel):
     _schema_cache: Union[list[ChatCompletionToolParam], None] = None
     _func_arg_models_cache: Union[dict[str, type[BaseModel]], None] = None
 
-    class Config:
-        frozen = True
+    model_config = {"frozen": True}
 
     def __init__(self, functions: Sequence[Callable[..., str]]):
         super().__init__(functions={f.__name__: f for f in functions})
@@ -64,5 +67,17 @@ class Toolbox(BaseModel):
 
         return result
 
-    def execute_function_calls(self, invocations: list[Invocation]) -> list[str]:
-        return [invocation.execute() for invocation in invocations]
+    def execute_function_calls(
+        self, invocations: list[Invocation]
+    ) -> list[ChatCompletionToolMessageParam]:
+        results: list[ChatCompletionToolMessageParam] = []
+        for invocation in invocations:
+            results.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": invocation.id,
+                    "content": invocation.execute(),
+                }
+            )
+
+        return results
