@@ -1,17 +1,15 @@
 import inspect
 import logging
-from enum import Enum
 from typing import Any, Callable, get_type_hints
 
+from openai import pydantic_function_tool
 from openai.types.chat import ChatCompletionToolParam
 from pydantic import BaseModel, create_model
 
 logger = logging.getLogger(__name__)
 
 
-def func_to_schema(
-    fn: Callable[..., Any], strict: bool = False
-) -> ChatCompletionToolParam:
+def func_to_schema(fn: Callable[..., Any]) -> ChatCompletionToolParam:
     """Wraps a Python function to be compatible with OpenAI's function calling API.
 
     Args:
@@ -20,22 +18,12 @@ def func_to_schema(
     Returns:
         dict: Function schema compatible with OpenAI's API
     """
-    # Get the JSON schema from the Pydantic model
     args_model = func_to_pydantic(fn)
-    model_schema = _strip_title(args_model.model_json_schema())
+    schema = pydantic_function_tool(
+        args_model, name=fn.__name__, description=inspect.getdoc(fn) or ""
+    )
+    model_schema = _strip_title(schema["function"].get("parameters", {}))
     _validate(fn.__name__, "parameters", model_schema)
-    # Build function schema
-    schema: ChatCompletionToolParam = {
-        "type": "function",
-        "function": {
-            "name": fn.__name__,
-            "description": inspect.getdoc(fn) or "",
-            "parameters": model_schema,
-        },
-    }
-    if strict:
-        model_schema["additionalProperties"] = False
-        schema["function"]["strict"] = True
 
     return schema
 
@@ -48,18 +36,12 @@ def func_to_pydantic(func: Callable[..., Any]) -> type[BaseModel]:
     # Create field definitions for the model
     fields = {}
     for param_name, param in sig.parameters.items():
-        param_type = type_hints.get(param_name, type(None))
+        param_type = type_hints.get(param_name)
 
         if not param_type:
             raise ValueError(
-                f"Parameter {param_name} in {func.__name__}(...) has no type hint"
+                f"Parameter `{param_name}` in `{func.__name__}` is not typed. Add a type hint."
             )
-        # Convert enum values to strings if param_type is an Enum
-        if issubclass(param_type, Enum):
-            if any(not isinstance(v.value, str) for v in param_type):
-                raise ValueError(
-                    f'Enum "{param_type.__name__}" has non-string values. Only enums with string values are supported.'
-                )
 
         # Handle default values
         if param.default != param.empty:
@@ -86,12 +68,12 @@ def _validate(fn_name: str, parent_key: str, schema: dict[str, Any]) -> None:
         additional_properties = schema.get("additionalProperties", False)
         if "properties" not in schema or additional_properties is not False:
             raise ValueError(
-                f"`{parent_key}` is a dict, which is not allowed. Convert to Pydantic instead."
+                f"`{fn_name}`: `{parent_key}` is a dict, which is not allowed. Convert to Pydantic instead."
             )
 
     if schema.get("type") == "array" and schema.get("items") == {}:
         raise ValueError(
-            f"`{parent_key}` is a list with untyped items. Please type the items."
+            f"`{fn_name}`: `{parent_key}` is a list with untyped items. Please type the items."
         )
 
     for key, value in schema.items():
@@ -104,5 +86,5 @@ def _validate(fn_name: str, parent_key: str, schema: dict[str, Any]) -> None:
             and not all(isinstance(v, str) for v in value)
         ):
             logger.warning(
-                f"`{parent_key}`: Enum values are not strings. This may cause issues."
+                f"`{fn_name}`: `{parent_key}` is an enum with non-string values. Note that the model won't see enum keys and this may cause issues."
             )

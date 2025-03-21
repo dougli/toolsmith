@@ -10,7 +10,7 @@ class User(BaseModel):
     name: str = Field(..., description="Name of the user to create.")
     email: str = Field(..., description="Email of the user to create.")
     skills: list[str] = Field(
-        [], description="Skills to add to the user. Can be empty."
+        ..., description="Skills to add to the user. Can be empty."
     )
 
 
@@ -75,10 +75,13 @@ def test_pydantic_schema_generation():
                             "description": "Skills to add to the user. Can be empty.",
                         },
                     },
-                    "required": ["name", "email"],
+                    "required": ["name", "email", "skills"],
+                    "additionalProperties": False,
                 },
             },
+            "additionalProperties": False,
         },
+        "strict": True,
     }
 
 
@@ -100,6 +103,7 @@ def test_pydantic_enum():
                         "type": {"$ref": "#/$defs/AnimalType"},
                     },
                     "required": ["name", "type"],
+                    "additionalProperties": False,
                 },
                 "AnimalType": {
                     "type": "string",
@@ -107,7 +111,9 @@ def test_pydantic_enum():
                 },
             },
             "required": ["animal"],
+            "additionalProperties": False,
         },
+        "strict": True,
     }
 
 

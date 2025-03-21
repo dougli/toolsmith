@@ -27,7 +27,9 @@ def test_basic_schema_generation():
                 "country": {"type": "string"},
                 "hour": {"type": "integer"},
             },
+            "additionalProperties": False,
         },
+        "strict": True,
     }
 
 
@@ -71,16 +73,21 @@ def test_str_enum():
     assert result == "The temperature in the kitchen is 72°F"
 
 
-def test_int_enum_raises():
-    class Room(Enum):
-        KITCHEN = 1
-        BEDROOM = 2
+def test_int_enum(caplog: pytest.LogCaptureFixture):
+    class Rating(Enum):
+        ONE = 1
+        TWO = 2
+        THREE = 3
+        FOUR = 4
+        FIVE = 5
 
-    def get_room_temperature(room: Room) -> str:
-        return f"The temperature in the {room.name.lower()} is 72°F"
+    def set_rating(rating: Rating) -> str:
+        return f"The rating is {rating.value}"
 
-    with pytest.raises(ValueError, match='Enum "Room" has non-string values'):
-        _run_test("What's the temperature in the bedroom?", get_room_temperature)
+    result = _run_test("Set the rating to 3", set_rating)
+    assert result == "The rating is 3"
+
+    assert "`set_rating`: `Rating` is an enum with non-string values." in caplog.text
 
 
 def test_boolean():
@@ -124,3 +131,14 @@ def test_dict_with_keys():
 
     with pytest.raises(ValueError, match="`settings` is a dict, which is not allowed"):
         _run_test("Set the volume to 50", set_key_value)
+
+
+def test_untyped_arg():
+    def add(a, b):
+        return a + b
+
+    with pytest.raises(
+        ValueError,
+        match="Parameter `a` in `add` is not typed. Add a type hint.",
+    ):
+        _run_test("Sum 1 and 2", add)
