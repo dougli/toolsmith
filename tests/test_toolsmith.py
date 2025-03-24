@@ -34,7 +34,7 @@ def test_basic_schema_generation():
 
 
 def _run_test(prompt: str, fn: Callable[..., str]):
-    toolbox = Toolbox(functions=[fn])
+    toolbox = Toolbox.create(functions=[fn])
 
     client = openai.OpenAI()
     response = client.chat.completions.create(
@@ -46,10 +46,8 @@ def _run_test(prompt: str, fn: Callable[..., str]):
     tool_calls = response.choices[0].message.tool_calls
     assert tool_calls is not None
 
-    invocations = toolbox.parse_invocations(tool_calls)
-    assert len(invocations) == 1
-
-    results = toolbox.execute_function_calls(invocations)
+    results = toolbox.execute_tool_calls(tool_calls)
+    assert len(results) == 1
     return results[0]["content"]
 
 

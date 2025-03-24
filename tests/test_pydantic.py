@@ -69,7 +69,6 @@ def test_pydantic_schema_generation():
                             "description": "Email of the user to create.",
                         },
                         "skills": {
-                            "default": [],
                             "type": "array",
                             "items": {"type": "string"},
                             "description": "Skills to add to the user. Can be empty.",
@@ -119,7 +118,7 @@ def test_pydantic_enum():
 
 def test_pydantic_schema_with_openai():
     # Wrap the weather function
-    toolbox = Toolbox([create_user])
+    toolbox = Toolbox.create([create_user])
 
     client = openai.OpenAI()
     response = client.chat.completions.create(
@@ -150,7 +149,7 @@ def test_pydantic_schema_with_openai():
 
 def test_pydantic_with_enums():
     # Wrap the add_animal function
-    toolbox = Toolbox([add_to_zoo])
+    toolbox = Toolbox.create([add_to_zoo])
 
     client = openai.OpenAI()
     response = client.chat.completions.create(
