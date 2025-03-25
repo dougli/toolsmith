@@ -32,7 +32,7 @@ class Invocation(BaseModel, Generic[T]):
         return self.func(**self.args)
 
 
-class _BaseToolbox(BaseModel, Generic[T]):
+class BaseToolbox(BaseModel, Generic[T]):
     functions: dict[str, Callable[..., T]] = {}
 
     _schema_cache: Union[list[ChatCompletionToolParam], None] = None
@@ -102,7 +102,7 @@ class _BaseToolbox(BaseModel, Generic[T]):
         return result
 
 
-class Toolbox(_BaseToolbox[Union[str, dict[str, Any]]]):
+class Toolbox(BaseToolbox[Union[str, dict[str, Any]]]):
     def execute_tool_calls(
         self, tool_calls: list[ChatCompletionMessageToolCall]
     ) -> list[ChatCompletionToolMessageParam]:
@@ -110,16 +110,17 @@ class Toolbox(_BaseToolbox[Union[str, dict[str, Any]]]):
         Note that this method is synchronous and will block until all tool calls are executed.
         For asynchronous execution, use the `AsyncToolbox` class.
 
-        Tool calls are executed in the order they are given. If a tool call raises an
-        uncaught exception, the remaining tool calls will not be executed. To prevent
-        this, catch exceptions within the tool handler functions themselves and return
-        error messages as part of the normal return value.
-
         Args:
             tool_calls: List of tool calls from the OpenAI API to execute
 
         Returns:
             List of tool messages containing the results of executing each tool call
+
+        Warning:
+            Tool calls are executed in the order they are given. If a tool call raises an
+            uncaught exception, the remaining tool calls will not be executed. To prevent
+            this, catch exceptions within the tool handler functions themselves
+            and return error messages as part of the normal return value.
         """
         invocations = self.parse_invocations(tool_calls)
 
@@ -139,7 +140,7 @@ class Toolbox(_BaseToolbox[Union[str, dict[str, Any]]]):
         return results
 
 
-class AsyncToolbox(_BaseToolbox[Awaitable[Union[str, dict[str, Any]]]]):
+class AsyncToolbox(BaseToolbox[Awaitable[Union[str, dict[str, Any]]]]):
     async def _execute_single_invocation(
         self, invocation: Invocation[Awaitable[Union[str, dict[str, Any]]]]
     ) -> ChatCompletionToolMessageParam:
@@ -164,7 +165,7 @@ class AsyncToolbox(_BaseToolbox[Awaitable[Union[str, dict[str, Any]]]]):
         Returns:
             List of tool messages containing the results of executing each tool call
 
-        Note:
+        Warning:
             If any individual tool call raises an uncaught exception, other pending tool calls
             will continue to run but may be left in an indeterminate state.
             To prevent this, catch exceptions within the tool handler functions themselves

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable
+from typing import Callable, Union
 
 import openai
 import pytest
@@ -129,6 +129,15 @@ def test_dict_with_keys():
 
     with pytest.raises(ValueError, match="`settings` is a dict, which is not allowed"):
         _run_test("Set the volume to 50", set_key_value)
+
+
+def test_nullable_arg():
+    def create_user(name: Union[str, None]) -> str:
+        assert name is None
+        return "User created"
+
+    result = _run_test("Create an empty user placeholder. No name please.", create_user)
+    assert result == "User created"
 
 
 def test_untyped_arg():

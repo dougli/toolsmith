@@ -13,7 +13,7 @@ def func_to_schema(fn: Callable[..., Any]) -> ChatCompletionToolParam:
     """Wraps a Python function to be compatible with OpenAI's function calling API.
 
     Args:
-        tool: The Python function to wrap
+        fn: The Python function to wrap
 
     Returns:
         dict: Function schema compatible with OpenAI's API
