@@ -565,7 +565,7 @@ response = client.chat.completions.create(
 )
 
 tool_calls = response.choices[0].message.tool_calls
-results = toolbox.execute_function_calls(tool_calls)
+results = toolbox.execute_tool_calls(tool_calls)
 </code></pre>
 <h2 id="how-toolboxcreate-works">How Toolbox.create() Works</h2>
 <p><code>Toolbox.create()</code> is the core function that transforms your Python functions into AI-callable tools. Here's what happens when you call it:</p>
@@ -625,9 +625,9 @@ def create_users(users: list[User]) -&gt; str:
 <h3 id="return-values">Return values</h3>
 <p>You can return a string or JSON in the form of a serializable <code>dict[str, Any]</code>. If a <code>dict</code> is provided, it will be serialized as JSON.</p>
 <h3 id="returning-function-call-results">Returning function call results</h3>
-<p>Calling <code>toolbox.execute_function_calls(...)</code> will return results in a format that can be appended as tool message responses. Simply append this as an additional message in the chat message api.</p>
+<p>Calling <code>toolbox.execute_tool_calls(...)</code> will return results in a format that can be appended as tool message responses. Simply append this as an additional message in the chat message api.</p>
 <pre><code class="language-py">tool_calls = response.choices[0].message.tool_calls
-results = toolbox.execute_function_calls(tool_calls)
+results = toolbox.execute_tool_calls(tool_calls)
 messages.extend(results)
 </code></pre>
 <h3 id="async-support">Async support</h3>
