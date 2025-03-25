@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "toolsmith"
-version = "0.1.1-alpha2"
+version = "0.2.0"
 description = "Instantly turn your Python functions into structured, AI-callable tools."
 authors = ["Douglas Li <lidouglas@gmail.com>"]
 license = "MIT"
