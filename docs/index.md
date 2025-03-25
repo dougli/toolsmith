@@ -40,7 +40,7 @@ response = client.chat.completions.create(
 )
 
 tool_calls = response.choices[0].message.tool_calls
-results = toolbox.execute_function_calls(tool_calls)
+results = toolbox.execute_tool_calls(tool_calls)
 ```
 
 ## How Toolbox.create() Works
@@ -108,11 +108,11 @@ You can return a string or JSON in the form of a serializable `dict[str, Any]`. 
 
 ### Returning function call results
 
-Calling `toolbox.execute_function_calls(...)` will return results in a format that can be appended as tool message responses. Simply append this as an additional message in the chat message api.
+Calling `toolbox.execute_tool_calls(...)` will return results in a format that can be appended as tool message responses. Simply append this as an additional message in the chat message api.
 
 ```py
 tool_calls = response.choices[0].message.tool_calls
-results = toolbox.execute_function_calls(tool_calls)
+results = toolbox.execute_tool_calls(tool_calls)
 messages.extend(results)
 ```
 

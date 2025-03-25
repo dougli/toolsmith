@@ -6,6 +6,7 @@ Toolsmith turns your Python functions into structured, AI-callable tools, using 
 - **Pydantic support:** Pydantic types get automatically serialized and deserialized.
 - **Unopinionated:** Toolsmith gets out of the way in terms of how you want to wire up the LLM loop.
 - **Fast:** Highly performant based on Pydantic's speed.
+- **Async support:** Built-in support for async functions with parallel execution of multiple tool calls.
 
 ## Installation
 
@@ -30,17 +31,21 @@ Put it all together and call the OpenAI API:
 
 ```py
 import openai
-import toolsmith
+from toolsmith import AsyncToolbox
 
-toolbox = toolsmith.create([create_user, search_users])
+toolbox = AsyncToolbox.create([create_user, search_users])
 
-client = openai.OpenAI()
-response = client.chat.completions.create(
+client = openai.AsyncOpenAI()
+response = await client.chat.completions.create(
     model="gpt-4o",
     messages=[{"role": "user", "content": "Make a 33 year old user called Alice"}]
-    tools=toolbox.get_schema(),
+    tools=toolbox.get_schema(),  # toolsmith handles the schema
 )
 
-invocations = toolbox.parse_invocations(response.choices[0].message.tool_calls)
-results = toolbox.execute_function_calls(invocations)
+# toolsmith will automatically call your functions here
+results = await toolbox.execute_tool_calls(response.choices[0].message.tool_calls)
 ```
+
+## Learn more
+
+https://dougli.github.io/toolsmith/
